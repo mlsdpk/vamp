@@ -6,6 +6,8 @@
 #include <memory>
 #include <vector>
 
+#include <pdqsort.h>
+
 #include <vamp/collision/environment.hh>
 #include <vamp/planning/nn.hh>
 #include <vamp/planning/phs.hh>
@@ -79,7 +81,7 @@ namespace vamp::planning
             { return buffer.get() + index * Configuration::num_scalars_rounded; };
 
             std::vector<std::size_t> parents(settings.max_samples);
-            std::vector<float> costs(settings.max_samples, std::numeric_limits<float>::infinity());
+            std::vector<float> costs(settings.max_samples, std::numeric_limits<float>::max());
             std::vector<float> radii(settings.max_samples);
             std::vector<std::vector<std::size_t>> children(settings.max_samples);
             std::vector<char> in_start_tree(settings.max_samples, 0);
@@ -104,13 +106,13 @@ namespace vamp::planning
             };
 
             // Check if a node and ALL its descendants can be pruned
-            const auto can_prune_branch = [&](auto &self, std::size_t idx, float threshold) -> bool
+            const auto can_prune_branch = [&](const auto &self, std::size_t idx, float threshold) -> bool
             {
                 if (solution_heuristic(idx) < threshold)
                 {
                     return false;
                 }
-                for (auto child_idx : children[idx])
+                for (const auto child_idx : children[idx])
                 {
                     if (not pruned[child_idx] and not self(self, child_idx, threshold))
                     {
@@ -121,10 +123,10 @@ namespace vamp::planning
             };
 
             // Mark a node and all its descendants as pruned
-            const auto mark_pruned = [&](auto &self, std::size_t idx) -> void
+            const auto mark_pruned = [&](const auto &self, std::size_t idx) -> void
             {
                 pruned[idx] = 1;
-                for (auto child_idx : children[idx])
+                for (const auto child_idx : children[idx])
                 {
                     self(self, child_idx);
                 }
@@ -142,6 +144,7 @@ namespace vamp::planning
 
             // Initialize goal nodes
             std::vector<std::size_t> goal_indices;
+            goal_indices.reserve(goals.size());
             for (const auto &goal : goals)
             {
                 goal.to_array(buffer_index(free_index));
@@ -171,7 +174,7 @@ namespace vamp::planning
             const auto prune_trees = [&](float threshold)
             {
                 // Mark prunable branches from start tree root
-                for (auto child_idx : children[start_index])
+                for (const auto child_idx : children[start_index])
                 {
                     if (not pruned[child_idx] and can_prune_branch(can_prune_branch, child_idx, threshold))
                     {
@@ -180,9 +183,9 @@ namespace vamp::planning
                 }
 
                 // Mark prunable branches from each goal tree root
-                for (auto goal_idx : goal_indices)
+                for (const auto goal_idx : goal_indices)
                 {
-                    for (auto child_idx : children[goal_idx])
+                    for (const auto child_idx : children[goal_idx])
                     {
                         if (not pruned[child_idx] and
                             can_prune_branch(can_prune_branch, child_idx, threshold))
@@ -223,9 +226,9 @@ namespace vamp::planning
                     inverse_dim);
 
             // Update descendant costs recursively after rewiring
-            const auto update_child_costs = [&](auto &self, std::size_t node_idx, float cost_delta) -> void
+            const auto update_child_costs = [&](const auto &self, std::size_t node_idx, float cost_delta) -> void
             {
-                for (auto child_idx : children[node_idx])
+                for (const auto child_idx : children[node_idx])
                 {
                     costs[child_idx] -= cost_delta;
                     self(self, child_idx, cost_delta);
@@ -247,9 +250,9 @@ namespace vamp::planning
                 }
                 start_chain.push_back(current);
 
-                for (int i = static_cast<int>(start_chain.size()) - 1; i >= 0; --i)
+                for (auto it = start_chain.rbegin(); it != start_chain.rend(); ++it)
                 {
-                    path.emplace_back(buffer_index(start_chain[i]));
+                    path.emplace_back(buffer_index(*it));
                 }
 
                 current = goal_side_node;
@@ -291,6 +294,7 @@ namespace vamp::planning
 
             std::size_t iter = 0;
             std::vector<std::pair<NNNodeType, float>> neighbors;
+            neighbors.reserve(settings.max_samples);
 
             while (iter++ < settings.max_iterations and free_index < settings.max_samples)
             {
@@ -411,7 +415,7 @@ namespace vamp::planning
 
                     if (settings.delay_cc)
                     {
-                        std::sort(
+                        pdqsort(
                             neighbors.begin(),
                             neighbors.end(),
                             [&](const auto &a, const auto &b)
@@ -530,12 +534,15 @@ namespace vamp::planning
                                 float cost_delta = costs[nbr_node.index] - nbr_new_cost;
 
                                 auto &old_parent_children = children[parents[nbr_node.index]];
-                                old_parent_children.erase(
-                                    std::remove(
-                                        old_parent_children.begin(),
-                                        old_parent_children.end(),
-                                        nbr_node.index),
-                                    old_parent_children.end());
+                                auto it = std::find(
+                                    old_parent_children.begin(),
+                                    old_parent_children.end(),
+                                    nbr_node.index);
+                                if (it != old_parent_children.end())
+                                {
+                                    *it = old_parent_children.back();
+                                    old_parent_children.pop_back();
+                                }
 
                                 parents[nbr_node.index] = new_node_index;
                                 costs[nbr_node.index] = nbr_new_cost;
