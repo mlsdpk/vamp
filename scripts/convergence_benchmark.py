@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from fire import Fire
 import vamp
 
-
 # Sphere cage problem (from sphere_cage_example.py)
 START = [0., -0.785, 0., -2.356, 0., 1.571, 0.785]
 GOAL = [2.35, 1., 0., -0.8, 0, 2.5, 0.785]
@@ -31,17 +30,17 @@ SPHERES = [
     [-0.35, -0.35, 0.8],
     [0, -0.55, 0.8],
     [0.35, -0.35, 0.8],
-]
+    ]
 
 
-def make_environment(radius=0.2):
+def make_environment(radius = 0.2):
     e = vamp.Environment()
     for sphere in SPHERES:
         e.add_sphere(vamp.Sphere(sphere, radius))
     return e
 
 
-def run_planner(planner_name, budget, env, start, goal, skip=0):
+def run_planner(planner_name, budget, env, start, goal, skip = 0):
     """Run a planner with a given iteration budget.
 
     Args:
@@ -87,8 +86,7 @@ def plot_deterministic(planner_list, budgets, env, start, goal, max_time_s, outp
         results[planner_name] = {}
 
         for budget in budgets:
-            plan_t, raw_c, simp_c, total_t = run_planner(
-                planner_name, budget, env, start, goal)
+            plan_t, raw_c, simp_c, total_t = run_planner(planner_name, budget, env, start, goal)
 
             results[planner_name][budget] = (plan_t, raw_c, simp_c, total_t)
 
@@ -100,7 +98,7 @@ def plot_deterministic(planner_list, budgets, env, start, goal, max_time_s, outp
                 print(f"  -> {plan_t/1000:.1f}s > {max_time_s}s limit, stopping")
                 break
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    fig, axes = plt.subplots(1, 2, figsize = (14, 6))
     colors = plt.cm.tab10.colors
 
     for idx, planner_name in enumerate(planner_list):
@@ -115,8 +113,15 @@ def plot_deterministic(planner_list, budgets, env, start, goal, max_time_s, outp
                 raw_times.append(pt)
                 raw_costs.append(rc)
         if raw_times:
-            axes[0].plot(raw_times, raw_costs, '-o', color=color,
-                         label=planner_name, linewidth=2, markersize=4)
+            axes[0].plot(
+                raw_times,
+                raw_costs,
+                '-o',
+                color = color,
+                label = planner_name,
+                linewidth = 2,
+                markersize = 4
+                )
 
         simp_times = []
         simp_costs = []
@@ -126,20 +131,27 @@ def plot_deterministic(planner_list, budgets, env, start, goal, max_time_s, outp
                 simp_times.append(tt)
                 simp_costs.append(sc)
         if simp_times:
-            axes[1].plot(simp_times, simp_costs, '-o', color=color,
-                         label=planner_name, linewidth=2, markersize=4)
+            axes[1].plot(
+                simp_times,
+                simp_costs,
+                '-o',
+                color = color,
+                label = planner_name,
+                linewidth = 2,
+                markersize = 4
+                )
 
     for ax, title in zip(axes, ["Raw Planner Cost", "After Simplification"]):
-        ax.set_xlabel("Time (ms)", fontsize=12)
-        ax.set_ylabel("Path Cost (L2)", fontsize=12)
-        ax.set_title(title, fontsize=14)
+        ax.set_xlabel("Time (ms)", fontsize = 12)
+        ax.set_ylabel("Path Cost (L2)", fontsize = 12)
+        ax.set_title(title, fontsize = 14)
         ax.set_xscale("log")
-        ax.legend(fontsize=11)
-        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize = 11)
+        ax.grid(True, alpha = 0.3)
 
-    fig.suptitle("Convergence: Sphere Cage — Deterministic (Halton)", fontsize=15, y=1.01)
+    fig.suptitle("Convergence: Sphere Cage — Deterministic (Halton)", fontsize = 15, y = 1.01)
     plt.tight_layout()
-    plt.savefig(output, dpi=150, bbox_inches="tight")
+    plt.savefig(output, dpi = 150, bbox_inches = "tight")
     print(f"\nDeterministic plot saved to {output}")
     plt.close(fig)
 
@@ -174,18 +186,22 @@ def plot_multi_seed(planner_list, budgets, env, start, goal, max_time_s, n_seeds
             n_solved = len(raw_costs)
 
             if raw_costs:
-                print(f"  budget={budget:>7d}  {np.mean(plan_times):>7.0f}ms  "
-                      f"raw={np.mean(raw_costs):.4f}±{np.std(raw_costs):.4f}  "
-                      f"solved={n_solved}/{n_seeds}")
+                print(
+                    f"  budget={budget:>7d}  {np.mean(plan_times):>7.0f}ms  "
+                    f"raw={np.mean(raw_costs):.4f}±{np.std(raw_costs):.4f}  "
+                    f"solved={n_solved}/{n_seeds}"
+                    )
             else:
-                print(f"  budget={budget:>7d}  {np.mean(plan_times):>7.0f}ms  "
-                      f"raw=FAIL  solved=0/{n_seeds}")
+                print(
+                    f"  budget={budget:>7d}  {np.mean(plan_times):>7.0f}ms  "
+                    f"raw=FAIL  solved=0/{n_seeds}"
+                    )
 
             if np.mean(plan_times) / 1000 > max_time_s:
                 print(f"  -> {np.mean(plan_times)/1000:.1f}s > {max_time_s}s limit, stopping")
                 stopped_at_budget = budget
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    fig, axes = plt.subplots(1, 2, figsize = (14, 6))
     colors = plt.cm.tab10.colors
 
     for idx, planner_name in enumerate(planner_list):
@@ -208,12 +224,22 @@ def plot_multi_seed(planner_list, budgets, env, start, goal, max_time_s, n_seeds
             raw_mean_costs = np.array(raw_mean_costs)
             raw_std_costs = np.array(raw_std_costs)
             raw_mean_times = np.array(raw_mean_times)
-            axes[0].plot(raw_mean_times, raw_mean_costs, '-o', color=color,
-                         label=planner_name, linewidth=2, markersize=4)
-            axes[0].fill_between(raw_mean_times,
-                                 raw_mean_costs - raw_std_costs,
-                                 raw_mean_costs + raw_std_costs,
-                                 color=color, alpha=0.15)
+            axes[0].plot(
+                raw_mean_times,
+                raw_mean_costs,
+                '-o',
+                color = color,
+                label = planner_name,
+                linewidth = 2,
+                markersize = 4
+                )
+            axes[0].fill_between(
+                raw_mean_times,
+                raw_mean_costs - raw_std_costs,
+                raw_mean_costs + raw_std_costs,
+                color = color,
+                alpha = 0.15
+                )
 
         # Collect per-budget statistics for simplified cost
         simp_mean_times = []
@@ -231,25 +257,34 @@ def plot_multi_seed(planner_list, budgets, env, start, goal, max_time_s, n_seeds
             simp_mean_costs = np.array(simp_mean_costs)
             simp_std_costs = np.array(simp_std_costs)
             simp_mean_times = np.array(simp_mean_times)
-            axes[1].plot(simp_mean_times, simp_mean_costs, '-o', color=color,
-                         label=planner_name, linewidth=2, markersize=4)
-            axes[1].fill_between(simp_mean_times,
-                                 simp_mean_costs - simp_std_costs,
-                                 simp_mean_costs + simp_std_costs,
-                                 color=color, alpha=0.15)
+            axes[1].plot(
+                simp_mean_times,
+                simp_mean_costs,
+                '-o',
+                color = color,
+                label = planner_name,
+                linewidth = 2,
+                markersize = 4
+                )
+            axes[1].fill_between(
+                simp_mean_times,
+                simp_mean_costs - simp_std_costs,
+                simp_mean_costs + simp_std_costs,
+                color = color,
+                alpha = 0.15
+                )
 
     for ax, title in zip(axes, ["Raw Planner Cost", "After Simplification"]):
-        ax.set_xlabel("Time (ms)", fontsize=12)
-        ax.set_ylabel("Path Cost (L2)", fontsize=12)
-        ax.set_title(title, fontsize=14)
+        ax.set_xlabel("Time (ms)", fontsize = 12)
+        ax.set_ylabel("Path Cost (L2)", fontsize = 12)
+        ax.set_title(title, fontsize = 14)
         ax.set_xscale("log")
-        ax.legend(fontsize=11)
-        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize = 11)
+        ax.grid(True, alpha = 0.3)
 
-    fig.suptitle(f"Convergence: Sphere Cage — {n_seeds} Seeds (Halton skip offsets)",
-                 fontsize=15, y=1.01)
+    fig.suptitle(f"Convergence: Sphere Cage — {n_seeds} Seeds (Halton skip offsets)", fontsize = 15, y = 1.01)
     plt.tight_layout()
-    plt.savefig(output, dpi=150, bbox_inches="tight")
+    plt.savefig(output, dpi = 150, bbox_inches = "tight")
     print(f"\nMulti-seed plot saved to {output}")
     plt.close(fig)
 
@@ -260,7 +295,7 @@ def main(
     radius: float = 0.2,
     max_time_s: float = 10.,
     n_seeds: int = 5,
-):
+    ):
     """Run convergence benchmark.
 
     Generates two figures:
@@ -280,10 +315,24 @@ def main(
         planner_list = [p.strip() for p in planners.split(",")]
 
     budgets = [
-        500, 1000, 2000, 3000, 5000, 7500,
-        10000, 15000, 20000, 30000, 50000, 75000,
-        100000, 150000, 200000, 300000, 500000,
-    ]
+        500,
+        1000,
+        2000,
+        3000,
+        5000,
+        7500,
+        10000,
+        15000,
+        20000,
+        30000,
+        50000,
+        75000,
+        100000,
+        150000,
+        200000,
+        300000,
+        500000,
+        ]
 
     env = make_environment(radius)
     start = np.array(START)
@@ -296,11 +345,9 @@ def main(
     if output.endswith('.png'):
         output = output[:-4]
 
-    plot_deterministic(planner_list, budgets, env, start, goal, max_time_s,
-                       f"{output}_deterministic.png")
+    plot_deterministic(planner_list, budgets, env, start, goal, max_time_s, f"{output}_deterministic.png")
 
-    plot_multi_seed(planner_list, budgets, env, start, goal, max_time_s, n_seeds,
-                    f"{output}_multi_seed.png")
+    plot_multi_seed(planner_list, budgets, env, start, goal, max_time_s, n_seeds, f"{output}_multi_seed.png")
 
 
 if __name__ == "__main__":
