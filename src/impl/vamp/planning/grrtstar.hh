@@ -226,7 +226,8 @@ namespace vamp::planning
                     inverse_dim);
 
             // Update descendant costs recursively after rewiring
-            const auto update_child_costs = [&](const auto &self, std::size_t node_idx, float cost_delta) -> void
+            const auto update_child_costs =
+                [&](const auto &self, std::size_t node_idx, float cost_delta) -> void
             {
                 for (const auto child_idx : children[node_idx])
                 {
@@ -535,9 +536,7 @@ namespace vamp::planning
 
                                 auto &old_parent_children = children[parents[nbr_node.index]];
                                 auto it = std::find(
-                                    old_parent_children.begin(),
-                                    old_parent_children.end(),
-                                    nbr_node.index);
+                                    old_parent_children.begin(), old_parent_children.end(), nbr_node.index);
                                 if (it != old_parent_children.end())
                                 {
                                     *it = old_parent_children.back();
