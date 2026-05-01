@@ -49,22 +49,6 @@ namespace vamp::planning
         {
             PlanningResult<Robot> result;
 
-            // Check straight-line solution
-            for (const auto &goal : goals)
-            {
-                if (validate_motion<Robot, rake, resolution>(start, goal, environment))
-                {
-                    result.path.emplace_back(start);
-                    result.path.emplace_back(goal);
-                    result.cost = start.distance(goal);
-                    result.nanoseconds = 0;
-                    result.iterations = 0;
-                    result.size.emplace_back(1);
-                    result.size.emplace_back(1);
-                    return result;
-                }
-            }
-
             auto start_time = std::chrono::steady_clock::now();
 
             NNTree start_tree;
@@ -289,7 +273,7 @@ namespace vamp::planning
             };
 
             // Trees for balanced bidirectional growth
-            bool tree_a_is_start = not true;
+            bool tree_a_is_start = false;
             auto *tree_a = &goal_tree;
             auto *tree_b = &start_tree;
 
@@ -403,7 +387,9 @@ namespace vamp::planning
                     neighbors.clear();
                     if (settings.use_k_nearest)
                     {
-                        std::size_t k = static_cast<std::size_t>(std::ceil(k_rrt_star * std::log(card)));
+                        std::size_t k = std::min(
+                            static_cast<std::size_t>(std::ceil(k_rrt_star * std::log(card))),
+                            settings.max_k_neighbors);
                         tree_a->nearest(neighbors, new_key, k);
                     }
                     else
@@ -648,6 +634,11 @@ namespace vamp::planning
                                 best_cost = path_cost;
                                 best_path = std::move(candidate_path);
                                 has_solution = true;
+
+                                if (not settings.optimize)
+                                {
+                                    break;
+                                }
 
                                 // Compute greedy best cost (max f^ along solution path)
                                 if (settings.use_phs and phs_ptr and goals.size() == 1)

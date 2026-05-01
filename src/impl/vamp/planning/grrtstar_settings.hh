@@ -8,6 +8,7 @@ namespace vamp::planning
         float rewire_factor = 1.1;
         float greedy_biasing_ratio = 0.9;
         bool use_k_nearest = true;
+        std::size_t max_k_neighbors = 512;
         bool delay_cc = true;
         bool balanced = true;
         float tree_ratio = 1.;
@@ -19,6 +20,7 @@ namespace vamp::planning
         float dd_min_radius = 1.;
         bool tree_pruning = true;
         float prune_threshold = 0.05;
+        bool optimize = true;
         std::size_t max_iterations = 100000;
         std::size_t max_samples = 100000;
     };
